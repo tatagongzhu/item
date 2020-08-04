@@ -1,0 +1,108 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hero - Admin</title>
+    <link rel="stylesheet" href="./css/bootstrap.css">
+    <script src="./lib/jquery-1.12.2.js"></script>
+    <script src="./lib/template-web.js"></script>
+    <script id="heroInfo" type="text/html">
+        <table class="table table-hover">
+            <tbody>
+                <tr>
+                    <td>姓名：</td>
+                    <td><input value="{{$data.name}}" type="text" name="name"></td>
+                </tr>
+                <tr>
+                    <td>性别：</td>
+                    <td>
+                        <input id="man" name="gender" value="男" type="radio" {{$data.gender === '男' ? 'checked': ''}}>
+                        <label for="man">男</label>
+                        <input name="gender" value="女" type="radio" id="female" {{$data.gender === '女' ? 'checked': ''}}>
+                        <label for="female ">女</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>头像：</td>
+                    <td>
+                        <img src="{{$data.img}}" alt="" id="photo" width="100"
+                        style='border: 1px solid #ccc;margin-bottom: 5px;'>
+                    <input onchange="upload()" type="file" id="uploadInput">
+                    <!-- 隐藏的输入框 -->
+                    <input value="{{$data.img}}" hidden name="img" id="myUploadImage"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><input onclick="updateHero()" type="button" id="sub" value="保存"></td>
+                </tr>
+            </tbody>
+        </table>
+    </script>
+    <script>
+        // 1. 通过id获取英雄数据，把英雄数据回显到页面上
+        // 1.1 获取url上的参数
+        console.log(window.location.search) // ?id=3
+        const id = window.location.search.split('=')[1];
+        // 1.2 发送ajax请求获取英雄数据
+        $.get('http://127.0.0.1:3001/getHeroById', { id }, (res) => {
+            if (res.code === 200) {
+                // 1.3 使用template方法渲染数据
+                const renderTemplate = template('heroInfo', res.data);
+                $('#myform').html(renderTemplate);
+            }
+        })
+
+        // 2. 把用户修改的数据发送保存到服务端
+        function updateHero() {
+            let myform = $('#myform').serialize();
+            // 增加id参数
+            myform = myform + '&id=' + id
+            $.post('http://127.0.0.1:3001/updateHero', myform, (res) => {
+                if (res.code === 200) {
+                    alert('修改成功')
+                    window.location.href = './index.html'
+                }
+            })
+        }
+        function upload() {
+            // 2.1 获取file对象,需要将jq对象转换成普通对象，然后读取files字段
+            const file = $('#uploadInput')[0].files[0];
+            // 2.2 创建formdata对象
+            const formData = new FormData();
+            formData.append('avatar', file);
+            // 2.3 发送ajax请求
+            $.post({
+                url: 'http://127.0.0.1:3001/uploadFile',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: (res) => {
+                    // 2.4 把上传后的图片回显到页面上
+                    if (res.code === 0) {
+                        // res.src是相对路径，path表示一个绝对路径
+                        const path = 'http://127.0.0.1:3001/' + res.src
+                        $('#photo').prop('src', path);
+                        $('#myUploadImage').val(path);
+                    }
+                },
+                dataType: 'json'
+            })
+        }
+    </script>
+</head>
+
+<body>
+    <header>
+        <div class="page-header container">
+            <h1>王者荣耀 <small>英雄管理器</small></h1>
+        </div>
+    </header>
+    <div class="container hero-list">
+        <form id='myform'>
+
+        </form>
+    </div>
+</body>
+
+</html>

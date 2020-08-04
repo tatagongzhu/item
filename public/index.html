@@ -1,0 +1,97 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Hero - Admin</title>
+  <link rel="stylesheet" href="./css/bootstrap.css">
+  <script src="./lib/jquery-1.12.2.js"></script>
+  <script src="./lib/template-web.js"></script>
+  <!-- 1.3、定义art-template模板 -->
+  <script id="heroListTemplate" type="text/html">
+    <!-- 遍历数组 -->
+    {{each $data}}
+      <tr>
+        <td>{{$value.id}}</td>
+        <td>{{$value.name}}</td>
+        <td>{{$value.gender}}</td>
+        <td><img style="width:50px;height:50px" src="{{$value.img}}"></td>
+        <td>
+          <a href="./edit.html?id={{$value.id}}">修改</a>
+          <a onclick="deleteHero({{$value.id}})" href="javascript:;">删除</a>
+        </td>
+      </tr>
+    {{/each}}
+  </script>
+  <script>
+    getHeroList()
+    function getHeroList() {
+      // 把token获取回来
+      const token = window.localStorage.getItem('token');
+      // 1.1、在页面加载的时候，发起ajax请求获取英雄列表数据
+      $.get({
+        url: 'http://127.0.0.1:3001/getHeroList',
+        headers: {
+          authorization: token
+        },
+        success: (res) => {
+          if (res.code === 200) {
+          // 1.2、使用art-template渲染数据
+          const renderTemplate = template('heroListTemplate', res.data);
+          // 1.4、把渲染结果显示到页面上
+          $('#tbody').html(renderTemplate);
+        }
+        }
+      })
+    }
+
+    // 2.1 实现删除功能
+    function deleteHero(id) {
+      // 把token获取回来
+      const token = window.localStorage.getItem('token');
+      // 2.2 发送ajax请求
+      $.get({
+        url: 'http://127.0.0.1:3001/delHeroById',
+        data: { id },
+        headers: {
+          authorization: token
+        },
+        success: (res) => {
+        // 2.3 删除成功，提醒用户，并且重新列表获取数据
+          if (res.code === 200) {
+            alert('删除成功');
+            getHeroList();
+          }
+        }
+      })
+    }
+
+  </script>
+</head>
+
+<body>
+  <header>
+    <div class="page-header container">
+      <h1>王者荣耀 <small>英雄管理器</small></h1>
+    </div>
+  </header>
+  <div class="container hero-list">
+    <a class="btn btn-success pull-right" href="./add.html">添加英雄</a>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>编号</th>
+          <th>名称</th>
+          <th>性别</th>
+          <th>头像</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+
+      </tbody>
+    </table>
+  </div>
+
+</body>
+
+</html>
